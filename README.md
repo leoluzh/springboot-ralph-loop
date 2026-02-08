@@ -25,73 +25,76 @@ Antes de começar, você precisará ter instalado:
 
 ## 📦 Google Gemini CLI - Instalação
 
-O Google Gemini CLI é a ferramenta que integra o Ralph Loop com o modelo Google Gemini. Siga os passos abaixo:
+O **Google Gemini CLI** é uma ferramenta de linha de comando para interagir com o Google Gemini. Veja: https://geminicli.com/docs/
 
-### 1. Pré-requisitos para Google Gemini CLI
+### 1. Pré-requisitos
 
-- Python 3.8 ou superior instalado
-- pip (Python Package Manager)
-- Conta Google Cloud com accesso ao Gemini API
+- Linux ou macOS
+- curl instalado
+- Acesso à internet
 
 ### 2. Instalação do Google Gemini CLI
 
-#### Windows (PowerShell)
-
-```powershell
-# Instalar via pip
-pip install google-gemini-cli
-
-# Ou usar o instalador específico
-python -m pip install --upgrade google-gemini-cli
-```
-
-#### macOS/Linux
+#### Opção 1: Via Script Automático (Recomendado)
 
 ```bash
-# Instalar via pip
-pip install google-gemini-cli
-
-# Ou com pip3 (se necessário)
-pip3 install google-gemini-cli
+# Dentro do Devbox shell ou seu ambiente
+make install-gemini-linux
 ```
 
-### 3. Configuração de Credenciais
+Ou manualmente:
+```bash
+bash scripts/install-gemini-linux.sh
+```
 
-Após instalar o Gemini CLI, você precisa configurar suas credenciais:
+#### Opção 2: Instalação Manual
+
+O script automático faz o download da versão mais recente de:
+```
+https://github.com/google/geminicli/releases
+```
+
+Se preferir fazer manualmente:
+1. Acesse https://geminicli.com/docs/install
+2. Baixe o binário para sua arquitetura (Linux x86_64, Linux ARM64, macOS, etc)
+3. Extraia: `tar -xzf gemini_*.tar.gz`
+4. Instale: `sudo mv gemini /usr/local/bin/`
+5. Verifique: `gemini --version`
+
+### 3. Configuração de API Key
 
 ```bash
-# Windows/PowerShell
-gemini auth login
+# Exportar API Key (temporário para sessão atual)
+export GEMINI_API_KEY='sua-api-key-aqui'
 
-# macOS/Linux
-gemini auth login
+# Ou configurar permanentemente em ~/.bashrc ou ~/.zshrc
+echo 'export GEMINI_API_KEY="sua-api-key-aqui"' >> ~/.bashrc
+source ~/.bashrc
 ```
 
-Você será direcionado para autorizar acesso à sua conta Google. Depois de autorizar, as credenciais serão salvas localmente.
+Obtenha sua API Key em: [Google AI Studio](https://aistudio.google.com/app/apikey)
 
 ### 4. Verificar Instalação
-
-Para confirmar que o Google Gemini CLI foi instalado corretamente:
 
 ```bash
 gemini --version
 gemini --help
 ```
 
-### 5. Configuração de API Key (Alternativa)
-
-Se preferir usar uma API Key ao invés de autenticação OAuth:
+### 5. Usar o Google Gemini CLI
 
 ```bash
-# Definir a variável de ambiente
-# Windows (PowerShell)
-$env:GEMINI_API_KEY = "sua-api-key-aqui"
+# Prompt simples
+gemini "Olá, quem é você?"
 
-# macOS/Linux
-export GEMINI_API_KEY="sua-api-key-aqui"
+# Com instruções
+gemini "Explique o padrão Ralph Loop em 3 linhas"
+
+# Ver ajuda
+gemini --help
 ```
 
-Você pode obter sua API Key em: [Google AI Studio](https://aistudio.google.com/app/apikey)
+**Documentação oficial**: https://geminicli.com/docs/
 
 ## 🖥️ Ambientes de Desenvolvimento Recomendados
 

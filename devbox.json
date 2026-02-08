@@ -2,9 +2,11 @@
   "packages": [
     "javaPackages.compiler.openjdk25",
     "maven@latest",
-    "python@3.11",
+    "python311",
+    "python311Packages.pip",
     "docker@latest",
-    "git@latest"
+    "git@latest",
+    "nodejs@25.6.0"
   ],
   "env": {
     "JAVA_MIN_MEM": "512m",
@@ -31,6 +33,10 @@
       "if command -v java >/dev/null 2>&1; then\n  JAVA_BIN=$(readlink -f \"$(which java)\") || JAVA_BIN=$(which java);\n  JAVA_HOME_DIR=$(dirname $(dirname \"$JAVA_BIN\"));\n  export JAVA_HOME=\"$JAVA_HOME_DIR\";\n  echo \"JAVA_HOME=$JAVA_HOME\";\nelse\n  echo 'java not found in PATH';\nfi",
       "echo \"JAVA_TOOL_OPTIONS=$JAVA_TOOL_OPTIONS\"",
       "echo \"MAVEN_OPTS=$MAVEN_OPTS\"",
+      "echo ''",
+      "echo 'Checking Python and pip...'",
+      "python3 --version",
+      "pip3 --version || pip --version || python3 -m pip --version",
       "java -version || true"
     ],
     "scripts": {

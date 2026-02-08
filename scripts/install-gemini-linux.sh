@@ -1,130 +1,146 @@
 #!/bin/bash
 
-fi
-    echo ""
-    echo "3. Salve e execute: source ~/.bashrc (ou ~/.zshrc)"
-    echo -e "   ${CYAN}export GEMINI_API_KEY='sua-api-key-aqui'${NC}"
-    echo "2. Adicione a linha:"
-    echo "1. Abra seu arquivo ~/.bashrc ou ~/.zshrc"
-    echo -e "${YELLOW}Para configurar a API Key permanentemente:${NC}"
-if [[ "$OSTYPE" == "linux-gnu"* ]] || [[ "$OSTYPE" == "darwin"* ]]; then
-# Adicionar sugestão de configuração permanente
+# Script de Instalação do Google Gemini CLI para Linux/macOS (segundo documentação oficial)
+# Fonte: https://geminicli.com/docs/get-started/installation/#1-standard-installation-recommended-for-standard-users
+# Instalação oficial (global):
+#   npm install -g @google/gemini-cli
+# Fallback (sem instalação global):
+#   npx @google/gemini-cli
 
-echo ""
-echo "======================================"
-echo -e "${CYAN}https://ai.google.dev/docs${NC}"
-echo -e "${YELLOW}Documentação:${NC}"
-echo "======================================"
+set -euo pipefail
 
-echo ""
-echo -e "   ${CYAN}python3 -c 'import google.generativeai as genai; print(genai.__version__)'${NC}"
-echo "3. Teste a instalação com:"
-echo ""
-echo -e "   ${CYAN}https://aistudio.google.com/app/apikey${NC}"
-echo "2. Obtenha sua API Key em:"
-echo ""
-echo -e "   ${CYAN}export GEMINI_API_KEY='sua-api-key-aqui'${NC}"
-echo "1. Configure sua API Key:"
-echo -e "${YELLOW}Próximos passos:${NC}"
-echo ""
 echo "======================================"
-echo -e "${GREEN}Instalação Concluída!${NC}"
+echo "Google Gemini CLI - Instalador (oficial)"
 echo "======================================"
 echo ""
-# Próximos passos
 
-fi
-    exit 1
-    echo -e "${RED}✗ Erro ao verificar instalação${NC}"
-else
-    echo -e "${GREEN}✓ Instalação verificada: $GEMINI_VERSION${NC}"
-if [ ! -z "$GEMINI_VERSION" ]; then
-GEMINI_VERSION=$($PIP_CMD show google-generativeai | grep Version)
-echo -e "${YELLOW}Verificando instalação...${NC}"
-echo ""
-# Verificar instalação
-
-fi
-    exit 1
-    echo -e "${RED}✗ Erro ao instalar google-generativeai${NC}"
-else
-    echo -e "${GREEN}✓ google-generativeai instalado com sucesso${NC}"
-if [ $? -eq 0 ]; then
-
-$PIP_CMD install google-generativeai
-echo -e "${YELLOW}Instalando google-generativeai...${NC}"
-echo ""
-# Instalar google-generativeai
-
-fi
-    exit 1
-    echo -e "${RED}✗ Erro ao atualizar pip${NC}"
-else
-    echo -e "${GREEN}✓ pip atualizado com sucesso${NC}"
-if [ $? -eq 0 ]; then
-$PYTHON_CMD -m pip install --upgrade pip
-echo -e "${YELLOW}Atualizando pip...${NC}"
-echo ""
-# Atualizar pip
-
-fi
-    exit 1
-    echo -e "${RED}✗ pip não encontrado!${NC}"
-else
-    PIP_CMD="pip"
-    echo -e "${GREEN}✓ pip encontrado: $PIP_VERSION${NC}"
-    PIP_VERSION=$(pip --version)
-elif command -v pip &> /dev/null; then
-    PIP_CMD="pip3"
-    echo -e "${GREEN}✓ pip encontrado: $PIP_VERSION${NC}"
-    PIP_VERSION=$(pip3 --version)
-if command -v pip3 &> /dev/null; then
-echo -e "${YELLOW}Verificando pip...${NC}"
-echo ""
-# Verificar se pip está instalado
-
-fi
-    exit 1
-    fi
-        echo "  brew install python3"
-        echo -e "${CYAN}Para macOS (com Homebrew):${NC}"
-        # macOS
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-        echo "  sudo dnf install python3 python3-pip"
-        echo -e "${CYAN}Para Fedora/RHEL:${NC}"
-        echo ""
-        echo "  sudo apt-get update && sudo apt-get install python3 python3-pip"
-        echo -e "${CYAN}Para Ubuntu/Debian:${NC}"
-        # Linux
-    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    # Sugestões por sistema operacional
-
-    echo -e "${YELLOW}Por favor, instale Python 3.8+ e tente novamente${NC}"
-    echo -e "${RED}✗ Python não encontrado!${NC}"
-else
-    PYTHON_CMD="python"
-    echo -e "${GREEN}✓ Python encontrado: $PYTHON_VERSION${NC}"
-    PYTHON_VERSION=$(python --version)
-elif command -v python &> /dev/null; then
-    PYTHON_CMD="python3"
-    echo -e "${GREEN}✓ Python encontrado: $PYTHON_VERSION${NC}"
-    PYTHON_VERSION=$(python3 --version)
-if command -v python3 &> /dev/null; then
-echo -e "${YELLOW}Verificando Python...${NC}"
-# Verificar se Python está instalado
-
-NC='\033[0m' # No Color
-CYAN='\033[0;36m'
-YELLOW='\033[1;33m'
-GREEN='\033[0;32m'
-RED='\033[0;31m'
 # Cores para output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+# Detectar OS (para mensagens apenas)
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    OS_LABEL="Linux"
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    OS_LABEL="macOS"
+else
+    OS_LABEL="Unknown"
+fi
+
+echo -e "${YELLOW}Instalador oficial do Gemini CLI - Sistema: ${OS_LABEL}${NC}"
+
+# Detectar ambiente Nix/Devbox
+IS_NIX=false
+if [[ -d "/nix/store" ]]; then
+    IS_NIX=true
+    echo -e "${YELLOW}Ambiente detectado: Nix/Devbox (instalações globais via npm podem falhar)${NC}"
+fi
 
 echo ""
-echo "======================================"
-echo "Google Gemini CLI - Instalador Linux/macOS"
-echo "======================================"
+# Verificar Node.js
+if command -v node >/dev/null 2>&1; then
+    NODE_VERSION=$(node --version)
+    echo -e "${GREEN}✓ Node.js encontrado: $NODE_VERSION${NC}"
+else
+    echo -e "${RED}✗ Node.js não encontrado${NC}"
+    echo -e "${YELLOW}Instale Node.js (inclui npm) antes de continuar.${NC}"
+    echo "Exemplo (Debian/Ubuntu): sudo apt-get install -y nodejs npm"
+    echo "Exemplo (macOS Homebrew): brew install node"
+    exit 1
+fi
 
-# Este script instala e configura o Google Gemini CLI
-# Script de Instalação do Google Gemini CLI para Linux/macOS
+# Verificar npm
+if command -v npm >/dev/null 2>&1; then
+    NPM_VERSION=$(npm --version)
+    echo -e "${GREEN}✓ npm encontrado: $NPM_VERSION${NC}"
+else
+    echo -e "${RED}✗ npm não encontrado${NC}"
+    echo -e "${YELLOW}Instale npm (geralmente incluído com Node.js) e rode novamente.${NC}"
+    exit 1
+fi
 
+PACKAGE="@google/gemini-cli"
+LOG_FILE="/tmp/gemini-npm-install.log"
+
+# Se estivermos em Nix/Devbox, NÃO tentar instalar globalmente
+if [ "$IS_NIX" = true ]; then
+    echo ""
+    echo -e "${YELLOW}Em Nix/Devbox: pulando tentativa de instalação global via npm (restrição de filesystem).${NC}"
+    echo -e "${YELLOW}Usando fallback recomendado: executar via npx (não requer instalação global).${NC}"
+    echo "Tentando executar com npx: npx ${PACKAGE} --version"
+    if npx -y "${PACKAGE}" --version >"${LOG_FILE}" 2>&1; then
+        echo -e "${GREEN}✓ npx conseguiu executar ${PACKAGE}${NC}"
+        echo -e "${GREEN}Você pode usar: npx ${PACKAGE} <args> ou adicionar um wrapper no projeto.${NC}"
+        rm -f "${LOG_FILE}" || true
+        exit 0
+    else
+        echo -e "${RED}✗ npx falhou em ambiente Nix/Devbox${NC}"
+        echo "Verifique o log: ${LOG_FILE}"
+        echo "Considere instalar o pacote via devbox (adicionar node/npm e gerir instalação global fora do /nix/store)"
+        exit 1
+    fi
+fi
+
+# Fora do Nix: tentar instalação global conforme doc oficial
+echo ""
+echo -e "${YELLOW}Executando instalação oficial: npm install -g ${PACKAGE}${NC}"
+# Tentar instalar globalmente
+if npm install -g "${PACKAGE}" >"${LOG_FILE}" 2>&1; then
+    echo -e "${GREEN}✓ pacote ${PACKAGE} instalado globalmente${NC}"
+else
+    echo -e "${RED}✗ Falha ao instalar ${PACKAGE} globalmente${NC}"
+    echo "Últimas linhas do log de instalação:"
+    tail -n 30 "${LOG_FILE}" | sed 's/^/    /'
+    echo ""
+
+    echo "Tentando fallback com npx (executa sem instalar globalmente)..."
+    if npx -y "${PACKAGE}" --version >"${LOG_FILE}" 2>&1; then
+        echo -e "${GREEN}✓ npx conseguiu executar ${PACKAGE}${NC}"
+        echo -e "${GREEN}Você pode usar o Gemini CLI com: npx ${PACKAGE} <args>${NC}"
+        rm -f "${LOG_FILE}" || true
+        exit 0
+    else
+        echo -e "${RED}✗ npx também falhou${NC}"
+        echo "Verifique o log em: ${LOG_FILE} e a documentação oficial: https://geminicli.com/docs/get-started/installation/"
+        exit 1
+    fi
+fi
+
+# Se a instalação global aparentemente funcionou, verificar comando
+if command -v gemini >/dev/null 2>&1; then
+    GEMINI_VERSION=$(gemini --version 2>/dev/null || true)
+    echo -e "${GREEN}✓ Gemini CLI instalado e disponível: ${GEMINI_VERSION}${NC}"
+else
+    echo -e "${YELLOW}Pacote instalado, mas o binário 'gemini' não está no PATH.${NC}"
+    GLOBAL_NPM_BIN=$(npm bin -g 2>/dev/null || true)
+    if [ -n "$GLOBAL_NPM_BIN" ]; then
+        echo "Diretório global npm bin: $GLOBAL_NPM_BIN"
+        echo "Adicione ao PATH: export PATH=\"$GLOBAL_NPM_BIN:$PATH\""
+    fi
+    echo "Como alternativa, use: npx ${PACKAGE} <args>"
+fi
+
+# Limpeza
+rm -f "${LOG_FILE}" 2>/dev/null || true
+
+# Próximos passos
+echo ""
+echo "======================================"
+echo -e "${GREEN}Instalação concluída (ou fallback disponível)!${NC}"
+echo "======================================"
+echo ""
+echo -e "${YELLOW}Próximos passos:${NC}"
+echo "1. Teste a instalação:"
+echo -e "   ${CYAN}gemini --version${NC}  # ou npx @google/gemini-cli --version${NC}"
+echo "2. Configure sua API Key:"
+echo -e "   ${CYAN}export GEMINI_API_KEY='sua-api-key-aqui'${NC}"
+echo ""
+echo "Documentação oficial: https://geminicli.com/docs/get-started/installation/"
+
+echo ""
+
+# Fim do script
+exit 0
