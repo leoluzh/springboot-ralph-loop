@@ -1,0 +1,50 @@
+{
+  "packages": [
+    "javaPackages.compiler.openjdk25",
+    "maven@latest",
+    "python311",
+    "python311Packages.pip",
+    "docker@latest",
+    "git@latest",
+    "nodejs@25.6.0"
+  ],
+  "env": {
+    "JAVA_MIN_MEM": "512m",
+    "JAVA_MAX_MEM": "2048m",
+    "JAVA_TOOL_OPTIONS": "-Dfile.encoding=UTF-8 -Xms512m -Xmx2048m",
+    "MAVEN_OPTS": "-Xms512m -Xmx2048m -XX:MaxMetaspaceSize=256m"
+  },
+  "shell": {
+    "init_hook": [
+      "echo 'Welcome to springboot-ralph-loop development environment!'",
+      "echo ''",
+      "echo 'Available commands:'",
+      "echo '  make help              - View all available commands'",
+      "echo '  make install-gemini-*  - Install Google Gemini CLI'",
+      "echo '  make build             - Build the project'",
+      "echo '  make test              - Run tests'",
+      "echo '  make run               - Run the application'",
+      "echo '  make docker-up         - Start Docker Compose services'",
+      "echo ''",
+      "echo 'Quick start:'",
+      "echo '  make install-gemini-linux && make build && make test && make run'",
+      "echo ''",
+      "echo 'Detecting Java runtime and setting JAVA_HOME...'",
+      "if command -v java >/dev/null 2>&1; then\n  JAVA_BIN=$(readlink -f \"$(which java)\") || JAVA_BIN=$(which java);\n  JAVA_HOME_DIR=$(dirname $(dirname \"$JAVA_BIN\"));\n  export JAVA_HOME=\"$JAVA_HOME_DIR\";\n  echo \"JAVA_HOME=$JAVA_HOME\";\nelse\n  echo 'java not found in PATH';\nfi",
+      "echo \"JAVA_TOOL_OPTIONS=$JAVA_TOOL_OPTIONS\"",
+      "echo \"MAVEN_OPTS=$MAVEN_OPTS\"",
+      "echo ''",
+      "echo 'Checking Python and pip...'",
+      "python3 --version",
+      "pip3 --version || pip --version || python3 -m pip --version",
+      "java -version || true"
+    ],
+    "scripts": {
+      "install_gemini": "make install-gemini-linux",
+      "build_project": "make clean-build",
+      "run_tests": "make test",
+      "start_app": "make run",
+      "docker_services": "make docker-up"
+    }
+  }
+}
