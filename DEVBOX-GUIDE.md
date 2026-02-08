@@ -20,12 +20,15 @@ O arquivo `devbox.json` inclui:
   "packages": [
     "javaPackages.compiler.openjdk25",
     "maven@latest",
-    "python@3.11",
+    "python311",
+    "python311Packages.pip",
     "docker@latest",
     "git@latest"
   ]
 }
 ```
+
+**Observação importante**: Incluímos `python311Packages.pip` explicitamente para garantir que pip esteja disponível. No Nix/Devbox, Python não inclui pip automaticamente, então precisamos especificar isso.
 
 ## 🚀 Instalação do Devbox
 
