@@ -1,0 +1,281 @@
+{
+  "realm": "springboot-ralph",
+  "enabled": true,
+  "displayName": "SpringBoot Ralph Loop",
+  "displayNameHtml": "<h1>SpringBoot Ralph Loop</h1>",
+  "accessTokenLifespan": 3600,
+  "refreshTokenLifespan": 86400,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "passwordPolicy": "length(8) and specialChars(1) and digits(1) and lowerCase(1) and upperCase(1)",
+  "revokeRefreshToken": false,
+  "bruteForceProtected": true,
+  "failureFactor": 30,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "waitIncrementSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "permanentLockout": false,
+  "defaultRoles": [
+    "offline_access",
+    "uma_authorization",
+    "user"
+  ],
+  "defaultGroups": [],
+  "requiredCredentials": [
+    "password"
+  ],
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA1",
+  "otpPolicyInitialCounter": 0,
+  "otpPolicyDigits": 6,
+  "otpPolicyLookAheadWindow": 1,
+  "otpPolicyPeriod": 30,
+  "otpSupportedApplications": [
+    "FreeOTP",
+    "Google Authenticator",
+    "Microsoft Authenticator"
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "firstName": "Admin",
+      "lastName": "User",
+      "email": "admin@springboot-ralph.local",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin_password"
+        }
+      ],
+      "realmRoles": [
+        "default-roles-springboot-ralph",
+        "admin"
+      ],
+      "clientRoles": {},
+      "groups": []
+    },
+    {
+      "username": "user",
+      "firstName": "Test",
+      "lastName": "User",
+      "email": "user@springboot-ralph.local",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "user_password"
+        }
+      ],
+      "realmRoles": [
+        "default-roles-springboot-ralph",
+        "user"
+      ],
+      "clientRoles": {},
+      "groups": []
+    }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "admin",
+        "description": "Administrator role",
+        "composite": false
+      },
+      {
+        "name": "user",
+        "description": "User role",
+        "composite": false
+      },
+      {
+        "name": "developer",
+        "description": "Developer role",
+        "composite": false
+      },
+      {
+        "name": "viewer",
+        "description": "Viewer role - read-only access",
+        "composite": false
+      }
+    ],
+    "client": {}
+  },
+  "clients": [
+    {
+      "clientId": "springboot-ralph-app",
+      "name": "SpringBoot Ralph Loop Application",
+      "description": "Web application for SpringBoot Ralph Loop",
+      "enabled": true,
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "redirectUris": [
+        "http://localhost:8081/*",
+        "http://localhost:8081/login/oauth2/code/keycloak"
+      ],
+      "webOrigins": [
+        "http://localhost:8081"
+      ],
+      "fullScopeAllowed": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "springboot-ralph-secret-key-change-in-production",
+      "notBefore": 0,
+      "bearerOnlyClient": false,
+      "consentRequired": false,
+      "defaultClientScopes": [
+        "web-origins",
+        "roles",
+        "profile",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access"
+      ],
+      "protocolMappers": [
+        {
+          "name": "Client ID",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "clientId",
+            "id.token.claim": "true",
+            "access.token.claim": "false",
+            "claim.name": "clientId",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "Client Host",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "clientHost",
+            "id.token.claim": "true",
+            "access.token.claim": "false",
+            "claim.name": "clientHost",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "Role list",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-hardcoded-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "springboot-ralph-cli",
+      "name": "SpringBoot Ralph Loop CLI",
+      "description": "Command line interface for SpringBoot Ralph Loop",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "redirectUris": [
+        "http://localhost/*"
+      ],
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "bearerOnlyClient": false,
+      "consentRequired": false
+    }
+  ],
+  "identityProviders": [],
+  "identityProviderMappers": [],
+  "components": {
+    "org.keycloak.services.clientregistration.policy.ClientRegistrationPolicy": [
+      {
+        "name": "Allowed Protocol Mapper Types",
+        "providerId": "allowed-protocol-mappers",
+        "subType": "authenticated",
+        "config": {
+          "allowed-protocol-mapper-types": [
+            "oidc-full-name-mapper",
+            "oidc-usermodel-property-mapper",
+            "oidc-sha256-pairwise-sub-mapper",
+            "oidc-address-mapper",
+            "saml-user-property-mapper",
+            "oidc-token-mapper",
+            "oidc-usermodel-attribute-mapper",
+            "saml-role-list-mapper",
+            "oidc-simple-usermodel-attribute-mapper",
+            "oidc-hardcoded-role-mapper",
+            "oidc-hardcoded-claim-mapper",
+            "oidc-script-based-protocol-mapper",
+            "saml-hardcoded-attribute-mapper",
+            "saml-user-attribute-mapper",
+            "saml-hardcoded-role-mapper",
+            "oidc-hardcoded-claim-mapper",
+            "oidc-script-based-protocol-mapper",
+            "oidc-claims-param-token-response-mapper",
+            "oidc-group-membership-mapper"
+          ]
+        }
+      }
+    ]
+  },
+  "internationalizationEnabled": false,
+  "supportedLocales": [],
+  "browserFlow": "browser",
+  "registrationFlow": "registration",
+  "resetCredentialsFlow": "reset credentials",
+  "clientAuthenticationFlow": "clients",
+  "dockerAuthenticationFlow": "docker auth",
+  "firstBrokerLoginFlow": "first broker login",
+  "authenticationFlows": [
+    {
+      "id": "browser",
+      "alias": "browser",
+      "description": "browser based authentication",
+      "providerId": "basic-flow",
+      "topLevel": true,
+      "builtIn": true,
+      "authenticationExecutions": [
+        {
+          "authenticator": "auth-cookie",
+          "requirement": "ALTERNATIVE",
+          "priority": 10,
+          "userSetupAllowed": false,
+          "authenicatorFlow": false
+        },
+        {
+          "authenticator": "auth-spnego",
+          "requirement": "DISABLED",
+          "priority": 20,
+          "userSetupAllowed": false,
+          "authenicatorFlow": false
+        },
+        {
+          "authenticator": "identity-provider-redirector",
+          "requirement": "ALTERNATIVE",
+          "priority": 25,
+          "userSetupAllowed": false,
+          "authenicatorFlow": false
+        },
+        {
+          "requirement": "ALTERNATIVE",
+          "priority": 30,
+          "userSetupAllowed": false,
+          "authenicatorFlow": true,
+          "flowAlias": "forms"
+        }
+      ]
+    }
+  ]
+}
+

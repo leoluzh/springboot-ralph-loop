@@ -1,0 +1,90 @@
+# Configuração Keycloak para Spring Boot
+# Adicione estas configurações ao seu application.yaml
+
+# Spring Boot Security - OpenID Connect
+spring:
+  application:
+    name: springboot-ralph-loop
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/springboot-ralph
+          jwk-set-uri: http://localhost:8080/realms/springboot-ralph/protocol/openid-connect/certs
+      client:
+        registration:
+          keycloak:
+            client-id: springboot-ralph-app
+            client-secret: springboot-ralph-secret-key-change-in-production
+            authorization-grant-type: authorization_code
+            redirect-uri: http://localhost:8081/login/oauth2/code/keycloak
+            scope:
+              - openid
+              - profile
+              - email
+            client-name: Keycloak
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8080/realms/springboot-ralph
+            user-name-attribute: preferred_username
+            user-info-uri: http://localhost:8080/realms/springboot-ralph/protocol/openid-connect/userinfo
+
+# Configuração de logging
+logging:
+  level:
+    org.keycloak: DEBUG
+    org.springframework.security: DEBUG
+
+# Server configuration
+server:
+  port: 8081
+  servlet:
+    context-path: /
+
+# Management endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+---
+
+# Perfil de Produção
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://seu-dominio.com/realms/springboot-ralph
+          jwk-set-uri: https://seu-dominio.com/realms/springboot-ralph/protocol/openid-connect/certs
+      client:
+        registration:
+          keycloak:
+            client-secret: ${KEYCLOAK_CLIENT_SECRET}
+            redirect-uri: https://seu-dominio.com/login/oauth2/code/keycloak
+        provider:
+          keycloak:
+            issuer-uri: https://seu-dominio.com/realms/springboot-ralph
+
+server:
+  port: 8081
+  ssl:
+    enabled: true
+    key-store: ${SSL_KEYSTORE_PATH}
+    key-store-password: ${SSL_KEYSTORE_PASSWORD}
+    key-store-type: PKCS12
+
+logging:
+  level:
+    org.keycloak: INFO
+    org.springframework.security: INFO
+

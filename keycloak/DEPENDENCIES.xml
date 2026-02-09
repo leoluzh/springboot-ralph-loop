@@ -1,0 +1,75 @@
+<!--
+  Dependências do Keycloak para Spring Boot
+
+  Adicione o seguinte ao seu pom.xml dentro da tag <dependencies>:
+
+  Versão do Spring Boot: 4.0.2
+  Versão do Spring Cloud: 2023.0.x
+-->
+
+<!-- Spring Boot Security com OAuth2 e OpenID Connect -->
+<!-- Já incluído no spring-boot-starter-security -->
+
+<!-- Spring Cloud Security - para OAuth2 Resource Server -->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-oauth2</artifactId>
+</dependency>
+
+<!-- Keycloak Spring Boot Adapter (opcional - para configuração mais avançada) -->
+<dependency>
+    <groupId>org.keycloak</groupId>
+    <artifactId>keycloak-spring-boot-starter</artifactId>
+    <version>23.0.0</version>
+</dependency>
+
+<!-- Keycloak Admin REST Client -->
+<dependency>
+    <groupId>org.keycloak</groupId>
+    <artifactId>keycloak-admin-client</artifactId>
+    <version>23.0.0</version>
+</dependency>
+
+<!-- JWT (JSON Web Token) Processing -->
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-api</artifactId>
+    <version>0.12.3</version>
+</dependency>
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-impl</artifactId>
+    <version>0.12.3</version>
+    <scope>runtime</scope>
+</dependency>
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-jackson</artifactId>
+    <version>0.12.3</version>
+    <scope>runtime</scope>
+</dependency>
+
+<!-- Spring Security OAuth2 Resource Server -->
+<!-- Já incluído ao adicionar spring-boot-starter-security -->
+
+<!-- OpenAPI/Swagger para documentação (opcional) -->
+<dependency>
+    <groupId>org.springdoc</groupId>
+    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+    <version>2.0.2</version>
+</dependency>
+
+<!-- Configuração do parent no pom.xml -->
+<!-- Adicione ao final do pom.xml, antes de </project> -->
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-dependencies</artifactId>
+            <version>2023.0.1</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+
