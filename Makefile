@@ -1,10 +1,69 @@
-.PHONY: help install-gemini-windows install-gemini-linux install-gemini clean build test run run-docker
+.PHONY: help install-gemini-windows install-gemini-linux install-gemini clean build test run run-docker compose-up compose-down compose-logs compose-ps compose-restart compose-rebuild docker-status docker-start pwd infra-up infra-down infra-logs
 
 # Variáveis
 PROJECT_NAME = springboot-ralph-loop
 MAVEN_CMD = mvnw
 PYTHON_CMD = python3
 PIP_CMD = pip3
+
+# ============================================================
+# DETECÇÃO AUTOMÁTICA - Docker ou Podman
+# ============================================================
+# Verifica se Docker está instalado
+DOCKER_EXISTS := $(shell command -v docker 2> /dev/null)
+# Verifica se o daemon do docker está respondendo (ativo)
+DOCKER_ACTIVE := $(shell docker info > /dev/null 2>&1 && echo "yes" || echo "no")
+
+# Verifica se Podman está instalado
+PODMAN_EXISTS := $(shell command -v podman 2> /dev/null)
+# Podman geralmente não tem daemon, mas verificamos se o comando info funciona
+PODMAN_ACTIVE := $(shell podman info > /dev/null 2>&1 && echo "yes" || echo "no")
+
+# Lógica de decisão:
+# 1. Se Docker estiver ativo, usa Docker.
+# 2. Se Docker não estiver ativo, mas Podman estiver ativo, usa Podman.
+# 3. Se nenhum estiver ativo, mas Docker existir, define como Docker (mas avisa que está inativo).
+# 4. Se nem Docker existir, mas Podman existir, define como Podman.
+# 5. Fallback para Docker.
+
+ifeq ($(DOCKER_ACTIVE),yes)
+    CONTAINER_CMD := docker
+    # Tenta detectar docker compose (plugin) vs docker-compose (standalone)
+    ifeq ($(shell docker compose version > /dev/null 2>&1 && echo yes || echo no),yes)
+        COMPOSE_CMD := docker compose
+    else
+        COMPOSE_CMD := docker-compose
+    endif
+    RUNTIME_NAME := Docker
+    IS_ACTIVE := true
+else ifeq ($(PODMAN_ACTIVE),yes)
+    CONTAINER_CMD := podman
+    # Podman 3.0+ suporta "podman compose" se o docker-compose estiver instalado ou via podman-compose wrapper
+    # Mas o comando nativo mais seguro é "podman-compose" se instalado, ou "podman compose"
+    # Vamos verificar se podman-compose existe
+    ifeq ($(shell command -v podman-compose 2> /dev/null),)
+        COMPOSE_CMD := podman compose
+    else
+        COMPOSE_CMD := podman-compose
+    endif
+    RUNTIME_NAME := Podman
+    IS_ACTIVE := true
+else ifneq ($(DOCKER_EXISTS),)
+    CONTAINER_CMD := docker
+    COMPOSE_CMD := docker-compose
+    RUNTIME_NAME := Docker (Inativo)
+    IS_ACTIVE := false
+else ifneq ($(PODMAN_EXISTS),)
+    CONTAINER_CMD := podman
+    COMPOSE_CMD := podman-compose
+    RUNTIME_NAME := Podman (Inativo)
+    IS_ACTIVE := false
+else
+    CONTAINER_CMD := docker
+    COMPOSE_CMD := docker-compose
+    RUNTIME_NAME := Nenhum
+    IS_ACTIVE := false
+endif
 
 # Cores para output (funciona em bash/linux)
 CYAN = \033[0;36m
@@ -13,9 +72,6 @@ YELLOW = \033[1;33m
 RED = \033[0;31m
 NC = \033[0m # No Color
 
-# ============================================================
-# HELP - Exibir ajuda
-# ============================================================
 # ============================================================
 # HELP - Exibir ajuda
 # ============================================================
@@ -51,11 +107,9 @@ help:
 	@echo "$(CYAN)=====================================$(NC)"
 	@echo "$(CYAN)$(PROJECT_NAME) - Makefile Help$(NC)"
 	@echo "$(CYAN)=====================================$(NC)"
+	@echo "$(YELLOW)Runtime Detectado: $(RUNTIME_NAME)$(NC)"
 	@echo ""
 	@echo "$(GREEN)🚀 Quick Start$(NC)"
-	@echo "  $(YELLOW)make quickstart$(NC)               - Ver guia rápido de início"
-	@echo ""
-	@echo "$(GREEN)Google Gemini CLI - Instalação$(NC)"
 	@echo "  $(YELLOW)make quickstart$(NC)               - Ver guia rápido de início"
 	@echo ""
 	@echo "$(GREEN)Google Gemini CLI - Instalação$(NC)"
@@ -75,13 +129,24 @@ help:
 	@echo "$(GREEN)Execução da Aplicação$(NC)"
 	@echo "  $(YELLOW)make run$(NC)                      - Executar a aplicação Spring Boot"
 	@echo "  $(YELLOW)make run-docker$(NC)               - Executar com Docker Compose"
-	@echo "  $(YELLOW)make docker-up$(NC)                - Iniciar serviços Docker"
-	@echo "  $(YELLOW)make docker-down$(NC)              - Parar serviços Docker"
-	@echo "  $(YELLOW)make docker-logs$(NC)              - Ver logs dos serviços Docker"
+	@echo ""
+	@echo "$(GREEN)Infraestrutura (Keycloak)$(NC)"
+	@echo "  $(YELLOW)make infra-up$(NC)                 - Iniciar infraestrutura (Keycloak)"
+	@echo "  $(YELLOW)make infra-down$(NC)               - Parar infraestrutura"
+	@echo "  $(YELLOW)make infra-logs$(NC)               - Ver logs da infraestrutura"
+	@echo ""
+	@echo "$(GREEN)Docker Compose - Gerenciamento$(NC)"
+	@echo "  $(YELLOW)make compose-up$(NC)               - Iniciar serviços Docker Compose"
+	@echo "  $(YELLOW)make compose-down$(NC)             - Parar serviços Docker Compose"
+	@echo "  $(YELLOW)make compose-logs$(NC)             - Ver logs dos serviços"
+	@echo "  $(YELLOW)make compose-ps$(NC)               - Exibir status dos serviços"
+	@echo "  $(YELLOW)make compose-restart$(NC)          - Reiniciar serviços"
+	@echo "  $(YELLOW)make compose-rebuild$(NC)          - Recompilar e iniciar serviços"
 	@echo ""
 	@echo "$(GREEN)Verificação$(NC)"
 	@echo "  $(YELLOW)make verify$(NC)                   - Verificar instalações (Python, Maven, Java)"
 	@echo "  $(YELLOW)make gemini-test$(NC)              - Testar instalação do Google Gemini"
+	@echo "  $(YELLOW)make pwd$(NC)                      - Mostrar diretório corrente"
 	@echo ""
 	@echo "$(GREEN)Desenvolvimento$(NC)"
 	@echo "  $(YELLOW)make install-deps$(NC)             - Instalar dependências do Maven"
@@ -164,34 +229,127 @@ run:
 
 ## Executar com Docker Compose
 run-docker: docker-up
-	@echo "$(GREEN)✓ Aplicação rodando com Docker Compose$(NC)"
+	@echo "$(GREEN)✓ Aplicação rodando com Docker Compose ($(RUNTIME_NAME))$(NC)"
 	@echo "$(YELLOW)Acesse: http://localhost:8080$(NC)"
 
 ## Iniciar serviços Docker
 docker-up:
-	@echo "$(CYAN)Iniciando Docker Compose...$(NC)"
-	docker-compose up -d
-	@echo "$(GREEN)✓ Serviços Docker iniciados$(NC)"
+	@echo "$(CYAN)Iniciando Docker Compose usando $(RUNTIME_NAME)...$(NC)"
+	$(COMPOSE_CMD) up -d
+	@echo "$(GREEN)✓ Serviços iniciados$(NC)"
 
 ## Parar serviços Docker
 docker-down:
 	@echo "$(YELLOW)Parando Docker Compose...$(NC)"
-	docker-compose down
-	@echo "$(GREEN)✓ Serviços Docker parados$(NC)"
+	$(COMPOSE_CMD) down
+	@echo "$(GREEN)✓ Serviços parados$(NC)"
 
 ## Ver logs dos serviços Docker
 docker-logs:
-	@echo "$(CYAN)Exibindo logs dos serviços Docker...$(NC)"
-	docker-compose logs -f
+	@echo "$(CYAN)Exibindo logs dos serviços...$(NC)"
+	$(COMPOSE_CMD) logs -f
 
 ## Recompilar Docker image
 docker-rebuild:
 	@echo "$(CYAN)Reconstruindo imagem Docker...$(NC)"
-	docker-compose up --build
+	$(COMPOSE_CMD) up --build
+
+## Verificar status do Docker
+docker-status:
+	@echo "$(CYAN)Verificando status do Runtime ($(RUNTIME_NAME))...$(NC)"
+	@echo ""
+	@echo "$(YELLOW)$(RUNTIME_NAME) versão:$(NC)"
+	@$(CONTAINER_CMD) --version 2>&1 || echo "$(RED)$(CONTAINER_CMD) não encontrado$(NC)"
+	@echo ""
+	@echo "$(YELLOW)Compose versão:$(NC)"
+	@$(COMPOSE_CMD) version 2>&1 || echo "$(RED)$(COMPOSE_CMD) não encontrado$(NC)"
+	@echo ""
+	@echo "$(YELLOW)Containers rodando:$(NC)"
+	@$(CONTAINER_CMD) ps
+
+## Iniciar Docker Desktop no Windows
+docker-start:
+	@echo "$(CYAN)Tentando iniciar Docker Desktop...$(NC)"
+	@powershell -Command "Get-Process Docker -ErrorAction SilentlyContinue | Select-Object -First 1 | ForEach-Object { if ($$_) { Write-Host '$(GREEN)✓ Docker já está rodando$(NC)' } else { Write-Host '$(YELLOW)Iniciando Docker Desktop...$(NC)'; & '$$Env:ProgramFiles\Docker\Docker\Docker.exe'; Start-Sleep -Seconds 3; Write-Host '$(YELLOW)Docker iniciado. Aguarde alguns segundos...$(NC)' } }" 2>/dev/null || echo "$(RED)Não foi possível iniciar Docker. Inicie manualmente.$(NC)"
+	@echo ""
+	@echo "$(YELLOW)Aguarde 10-30 segundos para o Docker iniciar completamente...$(NC)"
+	@echo "$(YELLOW)Verifique a bandeja de sistema (canto inferior direito) para 'Docker is running'$(NC)"
+	@echo ""
+	@echo "$(YELLOW)Quando pronto, execute:$(NC)"
+	@echo "  make docker-status"
+	@echo "  make compose-up"
+	@echo ""
+
+# ============================================================
+# INFRAESTRUTURA (Keycloak)
+# ============================================================
+
+## Iniciar infraestrutura (Keycloak)
+infra-up:
+	@echo "$(CYAN)Iniciando infraestrutura (Keycloak) com $(RUNTIME_NAME)...$(NC)"
+	$(COMPOSE_CMD) -f docker-compose.keycloak.yaml up -d
+	@echo "$(GREEN)✓ Infraestrutura iniciada$(NC)"
+	@echo "$(YELLOW)Keycloak acessível em: http://localhost:8081$(NC)"
+
+## Parar infraestrutura
+infra-down:
+	@echo "$(YELLOW)Parando infraestrutura...$(NC)"
+	$(COMPOSE_CMD) -f docker-compose.keycloak.yaml down
+	@echo "$(GREEN)✓ Infraestrutura parada$(NC)"
+
+## Ver logs da infraestrutura
+infra-logs:
+	@echo "$(CYAN)Exibindo logs da infraestrutura...$(NC)"
+	$(COMPOSE_CMD) -f docker-compose.keycloak.yaml logs -f
+
+# ============================================================
+# DOCKER COMPOSE - Comandos específicos
+# ============================================================
+
+## Iniciar serviços do Docker Compose
+compose-up:
+	@echo "$(CYAN)Iniciando serviços Docker Compose...$(NC)"
+	$(COMPOSE_CMD) up -d
+	@echo "$(GREEN)✓ Serviços iniciados com sucesso$(NC)"
+	@echo "$(YELLOW)Use 'make compose-logs' para ver logs$(NC)"
+
+## Parar serviços do Docker Compose
+compose-down:
+	@echo "$(YELLOW)Parando serviços Docker Compose...$(NC)"
+	$(COMPOSE_CMD) down
+	@echo "$(GREEN)✓ Serviços parados com sucesso$(NC)"
+
+## Ver logs dos serviços Docker Compose
+compose-logs:
+	@echo "$(CYAN)Exibindo logs Docker Compose (Ctrl+C para sair)...$(NC)"
+	$(COMPOSE_CMD) logs -f
+
+## Exibir status dos serviços Docker Compose
+compose-ps:
+	@echo "$(CYAN)Status dos serviços Docker Compose:$(NC)"
+	@$(COMPOSE_CMD) ps
+
+## Reiniciar serviços Docker Compose
+compose-restart:
+	@echo "$(YELLOW)Reiniciando serviços Docker Compose...$(NC)"
+	$(COMPOSE_CMD) restart
+	@echo "$(GREEN)✓ Serviços reiniciados com sucesso$(NC)"
+
+## Recompilar e iniciar serviços Docker Compose
+compose-rebuild:
+	@echo "$(CYAN)Reconstruindo e iniciando serviços Docker Compose...$(NC)"
+	$(COMPOSE_CMD) up -d --build
+	@echo "$(GREEN)✓ Serviços reconstruídos e iniciados$(NC)"
+	@echo "$(YELLOW)Use 'make compose-logs' para ver logs$(NC)"
 
 # ============================================================
 # VERIFICAÇÃO
 # ============================================================
+
+## Mostrar diretório corrente
+pwd:
+	@echo "$(CYAN)Diretório corrente:$(NC)"
+	@pwd
 
 ## Verificar instalações
 verify:
@@ -206,11 +364,11 @@ verify:
 	@echo "$(YELLOW)Python:$(NC)"
 	@$(PYTHON_CMD) --version 2>&1 || echo "$(RED)Python não encontrado$(NC)"
 	@echo ""
-	@echo "$(YELLOW)Docker:$(NC)"
-	@docker --version 2>&1 || echo "$(RED)Docker não encontrado$(NC)"
+	@echo "$(YELLOW)Container Runtime ($(RUNTIME_NAME)):$(NC)"
+	@$(CONTAINER_CMD) --version 2>&1 || echo "$(RED)$(CONTAINER_CMD) não encontrado$(NC)"
 	@echo ""
-	@echo "$(YELLOW)Docker Compose:$(NC)"
-	@docker-compose --version 2>&1 || echo "$(RED)Docker Compose não encontrado$(NC)"
+	@echo "$(YELLOW)Compose:$(NC)"
+	@$(COMPOSE_CMD) version 2>&1 || echo "$(RED)$(COMPOSE_CMD) não encontrado$(NC)"
 
 # ============================================================
 # ALIASES E ATALHOS
@@ -232,4 +390,3 @@ ig: install-gemini-manual gemini-test
 # Padrão Make (deve ser o último)
 # ============================================================
 .DEFAULT_GOAL := help
-
